@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate regenerated Figures 1 and 6 against clean-run baselines.
+"""Validate the figure mathematics and clean-run numerical baselines.
 
 The validator deliberately compares numerical summaries rather than PDF or
 PNG bytes. Vector files can differ in embedded metadata or font rendering
@@ -15,6 +15,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+from audit_figure1_math import main as audit_figure_1_math
 
 
 ROOT = Path(__file__).resolve().parent
@@ -212,6 +214,7 @@ def main() -> None:
                 + "\n- ".join(mismatches)
             )
         print("PASS Environment: Python packages match requirements-lock.txt")
+    audit_figure_1_math()
     output_root = args.output_root.resolve()
     validate_figure_1(
         output_root, args.absolute_tolerance, args.relative_tolerance

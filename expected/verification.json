@@ -1,14 +1,16 @@
 {
   "date": "2026-07-28",
-  "git_commit": "d15c25bac0cd86115e191216605c350c2bdf1750",
+  "source_simulation_commit": "d15c25bac0cd86115e191216605c350c2bdf1750",
   "platform": "macOS arm64",
   "python": "3.13.7",
   "figure_1": {
     "simulated_datasets": 8100,
     "wall_seconds": 384.73,
-    "pdf_sha256": "fe11ca4b7994a6aaff578a8a9b8a3b291dafe8df2f3413654703f2fb0cac673c",
+    "pdf_sha256": "ce741a496acb2961a939ee565083b061c48ac1a53c01ce5198b5cf2fb5d8c76e",
     "png_sha256": "dc473a2371b4d64443173723f542d4d97e761a8a24cb6cd330de522e913bbbce",
-    "summary_sha256": "ed8bebf9e72c00584a13cb90c80c6042c1fb7590ad44a40f1ec51fcc68c7830b"
+    "summary_sha256": "47c99524d556ece7de1e2d0ea82fd3859e71b8f8ba13c7d553630c5feb0325af",
+    "summary_uncertainty": "population standard deviation (ddof=0)",
+    "equations_7_10_audit": "passed"
   },
   "figure_6": {
     "wall_seconds": 58.02,

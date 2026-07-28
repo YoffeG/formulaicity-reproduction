@@ -5,6 +5,14 @@ Figures 1--6. The programs use fixed random seeds, write intermediate results
 to CSV, resume interrupted runs, and save both vector PDF and preview PNG
 outputs.
 
+The authoritative Figure 1 in this repository is the fully rerun,
+manuscript-correct Bernoulli result. It is generated from 8,100 synthetic
+datasets (nine panels, nine feature fractions, and 100 simulations), not
+redrawn from archived panel PDFs. A ready-to-use copy of the resulting vector
+figure is committed as `expected/figure_1_corrected.pdf`. Any manuscript copy
+that still contains the older archived-panel reconstruction should replace it
+with this corrected figure.
+
 The default scientific models are intentional:
 
 - **Figure 1:** independent Bernoulli likelihood on binary feature activations.
@@ -62,12 +70,29 @@ Program: `figure1.py`
 The nine panels use the parameter combinations in the manuscript. At every
 fraction of formulaic dimensions, Cross-Entropy, k-means, GMM, and DBSCAN
 receive the same binary realization. The plotted envelope is one population
-standard deviation across simulations.
+standard deviation across simulations. The Cross-Entropy calculation follows
+Equations 7--10 directly:
+
+```text
+p_j(s) = sum_i(s_i x_ij) / sum_i(s_i)
+L(s) = -sum_i [s_i log P(x_i|s) + (1-s_i) log P(x_i|1-s)]
+```
+
+The `p_j` values are independent Bernoulli probabilities and are therefore
+not normalized to sum to one across features. Both `log(p_j)` and
+`log(1-p_j)` terms are included. Memberships stay continuous during
+optimization and are thresholded once, after convergence.
 
 ```bash
 python figure1.py \
   --simulations 100 \
   --workers 12
+```
+
+Audit the implementation independently against the displayed equations:
+
+```bash
+python audit_figure1_math.py
 ```
 
 Outputs are written to `output/figure_1/`:
@@ -210,10 +235,12 @@ outputs with the independently verified clean-clone baselines:
 python validate_reproduction.py
 ```
 
-The command also checks every installed package against
-`requirements-lock.txt`. It compares numerical summaries rather than PDF
-bytes, allowing harmless differences in font rendering or embedded metadata.
-The clean-run baselines and verification record are in `expected/`.
+The command first audits the Figure 1 loss and analytic gradient against a
+separate direct implementation of Equations 7--10. It also checks every
+installed package against `requirements-lock.txt`. It compares numerical
+summaries rather than PDF bytes, allowing harmless differences in font
+rendering or embedded metadata. The clean-run baselines, corrected Figure 1
+vector PDF, and verification record are in `expected/`.
 
 ## Reproducibility notes
 

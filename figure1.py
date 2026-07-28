@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Regenerate Figure 1: the sparse Bernoulli simulation benchmark.
+"""Regenerate the corrected Figure 1 sparse-Bernoulli benchmark.
 
-The script uses the exact nine parameter panels and nine fractions of
-formulaic dimensions from the manuscript code.  Every trial is deterministic,
-all methods receive the same binary matrix, and results are checkpointed after
-each batch.  Re-running the same command resumes missing trials.
+The information method implements Equations 7--10 of the corrected manuscript:
+each feature has an independent cluster-conditioned Bernoulli probability,
+memberships remain continuous during optimization, and the assignments are
+thresholded only after convergence.  The script uses the exact nine parameter
+panels and nine fractions of formulaic dimensions in the manuscript.  Every
+trial is deterministic, all methods receive the same binary matrix, and
+results are checkpointed after each batch.  Re-running the same command
+resumes missing trials.
 """
 
 from __future__ import annotations
@@ -447,14 +451,22 @@ def main() -> None:
         subset=("panel", "fraction", "simulation", "method"), keep="last"
     )
     results["fraction"] = results["fraction"].round(1)
+    results = results.sort_values(
+        ["panel", "fraction", "simulation", "method"],
+        kind="stable",
+    ).reset_index(drop=True)
     results.to_csv(raw_csv, index=False)
     summary_csv = output_dir / "figure_1_summary.csv"
     (
         results.groupby(
             ["panel", "dimensions", "p", "p_form", "fraction", "method"],
-            as_index=False,
+            sort=True,
         )["mcc"]
-        .agg(["mean", "std", "count"])
+        .agg(
+            mean="mean",
+            std=lambda values: values.std(ddof=0),
+            count="count",
+        )
         .reset_index()
         .to_csv(summary_csv, index=False)
     )
@@ -463,7 +475,35 @@ def main() -> None:
     metadata = {
         "config": asdict(config),
         "likelihood": "independent Bernoulli feature activations",
+        "bernoulli_probability_estimator": (
+            "p_j = sum_i(s_i * x_ij) / sum_i(s_i); feature probabilities "
+            "are not normalized across j"
+        ),
+        "objective": (
+            "-sum_i[s_i log P(x_i|s) + "
+            "(1-s_i) log P(x_i|1-s)]"
+        ),
+        "optimization": (
+            "continuous memberships; multi-start L-BFGS-B with an exact "
+            "analytic gradient; one threshold at 0.5 after convergence"
+        ),
         "matrix": "the same binary matrix is supplied to all four methods",
+        "comparison_methods": {
+            "k_means": {
+                "n_clusters": 2,
+                "n_init": 100,
+                "max_iter": 100000,
+                "tolerance": 0.001,
+            },
+            "gmm": {
+                "n_components": 2,
+                "covariance_type": "full",
+            },
+            "dbscan": {
+                "epsilon": 0.5,
+                "min_samples": 5,
+            },
+        },
         "uncertainty": "one population standard deviation across simulations",
         "outputs": {
             "pdf": str(pdf),
