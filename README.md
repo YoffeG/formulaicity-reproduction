@@ -1,19 +1,22 @@
-# Figure reproduction suite
+# An Unsupervised Information-Theoretic Approach to Identifying Formulaic Clusters in Textual Data
 
-This directory provides four clean command-line programs for regenerating
-Figures 1--6. The programs use fixed random seeds, write intermediate results
-to CSV, resume interrupted runs, and save both vector PDF and preview PNG
+This repository contains the reference implementation, data, and
+reproducibility materials associated with the paper *An Unsupervised
+Information-Theoretic Approach to Identifying Formulaic Clusters in Textual
+Data*. It provides four command-line programs for regenerating Figures 1--6.
+The programs use fixed random seeds, preserve intermediate results in CSV
+format, resume interrupted computations, and produce vector PDF and PNG
 outputs.
 
-The authoritative Figure 1 in this repository is the fully rerun,
-manuscript-correct Bernoulli result. It is generated from 8,100 synthetic
-datasets (nine panels, nine feature fractions, and 100 simulations), not
-redrawn from archived panel PDFs. A ready-to-use copy of the resulting vector
-figure is committed as `expected/figure_1_corrected.pdf`. Any manuscript copy
-that still contains the older archived-panel reconstruction should replace it
-with this corrected figure.
+The Figure 1 result distributed in this repository is the complete rerun using
+the corrected Bernoulli specification. It comprises 8,100 synthetic datasets
+(nine panels, nine feature fractions, and 100 simulations) and is derived from
+the simulation outputs rather than reconstructed from archived panel PDFs.
+The corresponding vector figure is provided as
+`expected/figure_1_corrected.pdf`; manuscript versions containing the earlier
+archived-panel reconstruction should use this corrected figure.
 
-The default scientific models are intentional:
+The default statistical specifications are as follows:
 
 - **Figure 1:** independent Bernoulli likelihood on binary feature activations.
 - **Figure 2:** the manuscript Gaussian self-information objective with
@@ -45,9 +48,9 @@ All examples below assume that `reproduction_suite/` is the working directory.
 
 ## Inputs
 
-Figures 3--6 read the following files from the suite's own `data/` directory.
-They are real files, not links, so the folder can be copied to GitHub as one
-self-contained unit:
+Figures 3--6 read the following files from the repository's `data/` directory.
+The files are stored directly in the repository rather than as symbolic links,
+making the repository self-contained:
 
 - `Genesis_Lists_Narrative.csv`
 - `Exodus_P-nonP_Roemer_AB.csv`
@@ -59,9 +62,9 @@ no longer requires the Google Drive source file. Figure 1 is fully synthetic
 and requires no data file. The numerical engines and optimizer are also
 included in this directory, so no parent-project Python file is imported.
 
-Before publishing the folder, confirm that the biblical corpus and expert
-annotation files may be redistributed under the repository's license. Their
-roles and SHA-256 checksums are documented in `data/README.md`.
+Redistribution of the biblical corpus and expert-annotation files should
+conform to their applicable licenses. Their roles and SHA-256 checksums are
+documented in `data/README.md`.
 
 ## Figure 1
 
@@ -140,7 +143,7 @@ python figure2.py \
 
 Program: `figures3_5.py`
 
-The full command runs Genesis, Exodus, and Leviticus concurrently:
+The following command processes Genesis, Exodus, and Leviticus concurrently:
 
 ```bash
 python figures3_5.py \
@@ -158,7 +161,7 @@ Each book contains 260 combinations:
 
 Every completed combination is appended immediately to its CSV, so the same
 command safely resumes. A single book can be run with `--book genesis`,
-`--book exodus`, or `--book leviticus`. For a quick pipeline test:
+`--book exodus`, or `--book leviticus`. For a limited pipeline verification:
 
 ```bash
 python figures3_5.py \
@@ -238,9 +241,9 @@ python validate_reproduction.py
 The command first audits the Figure 1 loss and analytic gradient against a
 separate direct implementation of Equations 7--10. It also checks every
 installed package against `requirements-lock.txt`. It compares numerical
-summaries rather than PDF bytes, allowing harmless differences in font
-rendering or embedded metadata. The clean-run baselines, corrected Figure 1
-vector PDF, and verification record are in `expected/`.
+summaries rather than PDF bytes, thereby permitting non-substantive
+differences in font rendering or embedded metadata. The clean-run baselines,
+corrected Figure 1 vector PDF, and verification record are in `expected/`.
 
 ## Reproducibility notes
 
