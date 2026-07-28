@@ -1,6 +1,6 @@
-"""Reproduce the full parameter sweeps behind paper Figures 3--5.
+"""Numerical analysis and plotting engine for Figures 3--5.
 
-The scientific choices match the paper and the original project:
+The analysis follows the specifications reported in the article:
 
 * morphological TOTHT tokens;
 * the original ``Corpus.running_window`` boundaries;
@@ -39,7 +39,7 @@ from scipy import sparse
 from sklearn.cluster import KMeans
 from sklearn.metrics import matthews_corrcoef
 
-from formulaicity_optimization import optimize_legacy_partition
+from formulaicity_optimization import optimize_partition
 
 
 ROOT = Path(__file__).resolve().parent
@@ -209,14 +209,14 @@ def run_book(
         f"figure_{BOOKS[book]['figure']}_{book}_results.csv"
     )
     completed = load_completed(results_path)
-    legacy_results_path = OUTPUT_DIR / (
+    default_results_path = OUTPUT_DIR / (
         f"figure_{BOOKS[book]['figure']}_{book}_results.csv"
     )
     reusable_kmeans = (
-        load_completed(legacy_results_path)
+        load_completed(default_results_path)
         if (
             score_model != "binary"
-            and legacy_results_path.resolve() != results_path.resolve()
+            and default_results_path.resolve() != results_path.resolve()
         )
         else {}
     )
@@ -272,7 +272,7 @@ def run_book(
                     information_matrix = matrix.copy()
                     information_matrix.data.fill(1.0)
 
-                optimizer = optimize_legacy_partition(
+                optimizer = optimize_partition(
                     information_matrix,
                     score_model=score_model,
                     n_init=optimizer_restarts,
@@ -325,8 +325,8 @@ def run_book(
                 if formulaicity_gap_weight > 0 and formulaicity_gap_bits > 0:
                     row.update(
                         {
-                            "information_legacy_loss": (
-                                f"{optimizer.legacy_loss:.10f}"
+                            "information_model_loss": (
+                                f"{optimizer.model_loss:.10f}"
                             ),
                             "formulaicity_penalty": (
                                 f"{optimizer.formulaicity_penalty:.10f}"

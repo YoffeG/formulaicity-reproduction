@@ -3,15 +3,14 @@
 
 This is an independent, intentionally direct implementation of the Bernoulli
 probability estimator and two-cluster negative weighted log-likelihood.  It
-checks both the vectorized loss and its analytic gradient.  No archived plot
-data are read.
+checks both the vectorized loss and its analytic gradient.
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-from formulaicity_optimization import legacy_partition_loss_and_gradient
+from formulaicity_optimization import information_loss_and_gradient
 
 
 EPSILON = 1e-10
@@ -75,7 +74,7 @@ def main() -> None:
 
     direct_loss = direct_partition_loss(membership, samples)
     vectorized_loss, analytic_gradient = (
-        legacy_partition_loss_and_gradient(
+        information_loss_and_gradient(
             membership,
             samples,
             score_model="binary",

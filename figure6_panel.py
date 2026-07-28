@@ -1,8 +1,8 @@
-"""Create one Figure 6-style panel for a Leviticus fit.
+"""Generate one Leviticus analysis panel for Figure 6.
 
 The main axes show the features most strongly associated with the fitted
 formulaic cluster.  Error bars are the standard deviation across repeated
-half-sample estimates.  The inset shows the corrected leave-one-out
+half-sample estimates. The inset shows the leave-one-out
 self-information distributions of the fitted clusters.
 """
 
@@ -31,8 +31,8 @@ from matplotlib.patches import Rectangle
 from scipy import sparse
 from scipy.stats import norm
 
-from formulaicity_optimization import optimize_legacy_partition
-from run_figures_3_5 import (
+from formulaicity_optimization import optimize_partition
+from figures3_5_engine import (
     DATA_DIR,
     count_matrix,
     load_book,
@@ -309,7 +309,7 @@ def main() -> None:
     if not np.array_equal(valid_p_labels, p_labels[valid_indices]):
         raise RuntimeError("Filtered expert-label alignment failed")
 
-    optimizer = optimize_legacy_partition(
+    optimizer = optimize_partition(
         samples,
         score_model=args.score_model,
         n_init=args.optimizer_restarts,

@@ -1,9 +1,7 @@
-"""Fast optimization of the published loss and semantic cluster orientation.
+"""Information-theoretic optimization and semantic cluster orientation.
 
-The optimizer in this module deliberately retains the probability estimates
-and loss used by ``entropy_optim.py``.  It changes only the numerical method:
-the loss and its analytic gradient are evaluated with vectorized operations,
-memberships remain continuous during optimization, and the final solution is
+The loss and its analytic gradient are evaluated with vectorized operations.
+Memberships remain continuous during optimization, and the final solution is
 thresholded once.
 
 Cluster fitting and the later formulaic/non-formulaic designation are kept
@@ -25,7 +23,7 @@ _LOG_2 = np.log(2.0)
 
 
 @dataclass(frozen=True)
-class LegacyOptimizationResult:
+class OptimizationResult:
     """Result of optimizing the published loss, optionally with a gap cost."""
 
     labels: np.ndarray
@@ -38,7 +36,7 @@ class LegacyOptimizationResult:
     score_model: str
     restart: int
     n_function_evaluations: int
-    legacy_loss: float = np.nan
+    model_loss: float = np.nan
     formulaicity_penalty: float = 0.0
     soft_self_information_gap_bits: float = np.nan
 
@@ -201,12 +199,12 @@ def _cluster_log_score_and_gradient(
     return float(score), direct_gradient + probability_gradient
 
 
-def legacy_partition_loss_and_gradient(
+def information_loss_and_gradient(
     membership: np.ndarray,
     samples: np.ndarray,
     score_model: str = "binary",
 ) -> tuple[float, np.ndarray]:
-    """Evaluate the unchanged published loss and its analytic gradient."""
+    """Evaluate the information-theoretic loss and its analytic gradient."""
 
     matrix = _as_feature_matrix(samples)
     model = _canonical_score_model(score_model)
@@ -239,14 +237,14 @@ def legacy_partition_loss_and_gradient(
     return float(loss), gradient
 
 
-def legacy_partition_loss(
+def information_loss(
     membership: np.ndarray,
     samples: np.ndarray,
     score_model: str = "binary",
 ) -> float:
-    """Evaluate only the unchanged published loss."""
+    """Evaluate only the information-theoretic loss."""
 
-    return legacy_partition_loss_and_gradient(
+    return information_loss_and_gradient(
         membership, samples, score_model
     )[0]
 
@@ -367,16 +365,17 @@ def partition_loss_and_gradient(
     formulaicity_gap_bits: float = 0.0,
     formulaicity_smoothing: float = 0.5,
 ) -> tuple[float, np.ndarray]:
-    """Evaluate the published loss plus an optional formulaicity-gap cost.
+    """Evaluate the information loss plus an optional formulaicity-gap cost.
 
     The optional addition is
 
-    ``legacy_loss * weight * max(0, target_gap - observed_gap) ** 2``,
+    ``model_loss * weight * max(0, target_gap - observed_gap) ** 2``,
 
     where ``observed_gap`` is the absolute difference between the clusters'
-    soft leave-one-out mean self-information.  Multiplication by the legacy
+    soft leave-one-out mean self-information. Multiplication by the model
     loss makes ``weight`` comparable across matrices whose raw loss scales
-    differ.  A zero weight follows the unchanged published-loss path exactly.
+    differ. A zero weight evaluates the information loss without an additional
+    formulaicity-gap term.
     """
 
     if formulaicity_gap_weight < 0:
@@ -386,11 +385,11 @@ def partition_loss_and_gradient(
     if formulaicity_smoothing <= 0:
         raise ValueError("formulaicity_smoothing must be positive")
 
-    legacy_loss, legacy_gradient = legacy_partition_loss_and_gradient(
+    model_loss, model_gradient = information_loss_and_gradient(
         membership, samples, score_model
     )
     if formulaicity_gap_weight == 0.0 or formulaicity_gap_bits == 0.0:
-        return legacy_loss, legacy_gradient
+        return model_loss, model_gradient
 
     cluster_1_mean, cluster_1_gradient = (
         _soft_leave_one_out_mean_self_information_and_gradient(
@@ -410,10 +409,10 @@ def partition_loss_and_gradient(
     observed_gap = abs(signed_gap)
     shortfall = max(0.0, formulaicity_gap_bits - observed_gap)
     if shortfall == 0.0:
-        return legacy_loss, legacy_gradient
+        return model_loss, model_gradient
 
     relative_penalty = formulaicity_gap_weight * shortfall**2
-    total_loss = legacy_loss * (1.0 + relative_penalty)
+    total_loss = model_loss * (1.0 + relative_penalty)
     signed_gap_gradient = (
         cluster_1_gradient + cluster_0_weight_gradient
     )
@@ -424,8 +423,8 @@ def partition_loss_and_gradient(
         * signed_gap_gradient
     )
     total_gradient = (
-        (1.0 + relative_penalty) * legacy_gradient
-        + legacy_loss
+        (1.0 + relative_penalty) * model_gradient
+        + model_loss
         * formulaicity_gap_weight
         * shortfall_squared_gradient
     )
@@ -452,7 +451,7 @@ def _initial_membership(
     return np.clip(membership, lower_bound, upper_bound)
 
 
-def optimize_legacy_partition(
+def optimize_partition(
     samples: np.ndarray,
     score_model: str = "binary",
     *,
@@ -465,19 +464,19 @@ def optimize_legacy_partition(
     formulaicity_gap_weight: float = 0.0,
     formulaicity_gap_bits: float = 0.0,
     formulaicity_smoothing: float = 0.5,
-) -> LegacyOptimizationResult:
+) -> OptimizationResult:
     """Optimize the published loss with multi-start L-BFGS-B.
 
     Directly optimizing membership in the sigmoid range is equivalent to the
-    old bounded-logit parameterization, but avoids applying ``sigmoid`` during
+    bounded-logit parameterization, while avoiding ``sigmoid`` evaluation in
     every loss evaluation.  The analytic gradient makes each optimizer step
     require one vectorized pass rather than hundreds of finite-difference or
     Powell evaluations.
 
     ``formulaicity_gap_weight`` optionally activates a relative cost when the
     clusters' soft leave-one-out mean self-information gap is smaller than
-    ``formulaicity_gap_bits``.  Its default of zero preserves the published
-    objective exactly.  ``min_component_fraction`` supplies the corresponding
+    ``formulaicity_gap_bits``. Its default of zero selects the information
+    objective alone. ``min_component_fraction`` supplies the corresponding
     minimum-size safeguard after memberships are thresholded.
     """
 
@@ -485,8 +484,7 @@ def optimize_legacy_partition(
         from scipy.optimize import minimize
     except ImportError as error:
         raise ImportError(
-            "optimize_legacy_partition requires scipy, which is already a "
-            "dependency of entropy_optim.py"
+            "optimize_partition requires scipy"
         ) from error
 
     matrix = _as_feature_matrix(samples)
@@ -506,7 +504,7 @@ def optimize_legacy_partition(
     upper_bound = 1.0 - lower_bound
     bounds = [(lower_bound, upper_bound)] * matrix.shape[0]
     rng = np.random.default_rng(random_state)
-    best_result: LegacyOptimizationResult | None = None
+    best_result: OptimizationResult | None = None
     collapsed_sizes: list[tuple[int, int]] = []
     use_formulaicity_gap = (
         formulaicity_gap_weight > 0.0
@@ -515,7 +513,7 @@ def optimize_legacy_partition(
     objective_function = (
         partition_loss_and_gradient
         if use_formulaicity_gap
-        else legacy_partition_loss_and_gradient
+        else information_loss_and_gradient
     )
     objective_arguments = (
         (
@@ -556,7 +554,7 @@ def optimize_legacy_partition(
             continue
 
         if use_formulaicity_gap:
-            legacy_loss_value = legacy_partition_loss(
+            model_loss_value = information_loss(
                 membership, matrix, model
             )
             cluster_1_mean = (
@@ -572,14 +570,14 @@ def optimize_legacy_partition(
             soft_gap = abs(cluster_1_mean - cluster_0_mean)
             formulaicity_penalty = max(
                 0.0,
-                float(scipy_result.fun) - legacy_loss_value,
+                float(scipy_result.fun) - model_loss_value,
             )
         else:
-            legacy_loss_value = float(scipy_result.fun)
+            model_loss_value = float(scipy_result.fun)
             soft_gap = np.nan
             formulaicity_penalty = 0.0
 
-        candidate = LegacyOptimizationResult(
+        candidate = OptimizationResult(
             labels=labels,
             membership=membership,
             loss=float(scipy_result.fun),
@@ -590,7 +588,7 @@ def optimize_legacy_partition(
             score_model=model,
             restart=restart,
             n_function_evaluations=int(scipy_result.nfev),
-            legacy_loss=float(legacy_loss_value),
+            model_loss=float(model_loss_value),
             formulaicity_penalty=float(formulaicity_penalty),
             soft_self_information_gap_bits=float(soft_gap),
         )

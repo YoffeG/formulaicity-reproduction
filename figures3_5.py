@@ -18,7 +18,7 @@ from pathlib import Path
 
 
 SUITE_DIR = Path(__file__).resolve().parent
-ENGINE = SUITE_DIR / "run_figures_3_5.py"
+ENGINE = SUITE_DIR / "figures3_5_engine.py"
 BOOKS = ("genesis", "exodus", "leviticus")
 
 

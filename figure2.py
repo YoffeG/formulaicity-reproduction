@@ -2,9 +2,9 @@
 """Regenerate all six panels of the Gaussian Figure 2 benchmark.
 
 The numerical engine is the validated vectorized implementation in
-``run_figure_2_drive_code.py``.  It preserves the manuscript objective while
-using bounded L-BFGS-B and analytic derivatives instead of slow Powell
-finite-difference searches.  Trials are deterministic and resumable.
+``figure2_engine.py``. It preserves the manuscript objective while using
+bounded L-BFGS-B and analytic derivatives instead of slow Powell
+finite-difference searches. Trials are deterministic and resumable.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ import pandas as pd
 
 
 SUITE_DIR = Path(__file__).resolve().parent
-ENGINE = SUITE_DIR / "run_figure_2_drive_code.py"
+ENGINE = SUITE_DIR / "figure2_engine.py"
 
 
 def parse_args() -> argparse.Namespace:
@@ -58,7 +58,7 @@ def redraw(output_dir: Path) -> None:
     """Use the engine's publication formatter without rerunning simulations."""
 
     sys.path.insert(0, str(SUITE_DIR))
-    import run_figure_2_drive_code as engine
+    import figure2_engine as engine
 
     raw_csv = output_dir / "figure_2_trials.csv"
     if not raw_csv.exists():

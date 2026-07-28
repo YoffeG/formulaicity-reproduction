@@ -23,7 +23,7 @@ from pypdf import PdfReader, PdfWriter, Transformation
 
 
 SUITE_DIR = Path(__file__).resolve().parent
-PANEL_ENGINE = SUITE_DIR / "plot_figure6_h_formulaic_panel.py"
+PANEL_ENGINE = SUITE_DIR / "figure6_panel.py"
 PANELS = (
     ("a", 12, 3, 500),
     ("b", 6, 5, 500),

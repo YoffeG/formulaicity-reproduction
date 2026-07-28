@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Regenerate the corrected Figure 1 sparse-Bernoulli benchmark.
+"""Regenerate the Figure 1 sparse-Bernoulli benchmark.
 
-The information method implements Equations 7--10 of the corrected manuscript:
+The information method implements Equations 7--10 of the article:
 each feature has an independent cluster-conditioned Bernoulli probability,
 memberships remain continuous during optimization, and the assignments are
 thresholded only after convergence.  The script uses the exact nine parameter
@@ -36,7 +36,7 @@ from sklearn.mixture import GaussianMixture
 SUITE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SUITE_DIR))
 
-from formulaicity_optimization import optimize_legacy_partition
+from formulaicity_optimization import optimize_partition
 
 
 FRACTIONS = np.round(np.arange(0.1, 1.0, 0.1), 1)
@@ -176,7 +176,7 @@ def run_trial(task: tuple[int, int, int, Panel, float, Config]) -> list[dict]:
         panel, fraction, config.samples_per_cluster, rng
     )
 
-    information = optimize_legacy_partition(
+    information = optimize_partition(
         samples,
         score_model="binary",
         n_init=config.optimizer_restarts,

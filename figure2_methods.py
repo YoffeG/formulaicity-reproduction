@@ -1,10 +1,9 @@
-"""Local reference implementation of the Figure 2 data and comparators.
+"""Data-generation and comparison methods used for Figure 2.
 
-Only the small, stable API consumed by ``run_figure_2_drive_code.py`` is
-included here.  This removes the run-time dependency on the Google Drive copy
-of ``entropy_optim_rewritten.py`` while preserving its Gaussian generator:
-one class has diagonal variance 3, the other variance 10, and ``noise``
-replaces the requested fraction of low-variance coordinates by variance 10.
+This module provides the scientific routines consumed by
+``figure2_engine.py``. The Gaussian generator defines one class
+has diagonal variance 3, the other variance 10, and ``noise`` replaces the
+requested fraction of low-variance coordinates by variance 10.
 """
 
 from __future__ import annotations
@@ -33,8 +32,8 @@ def generate_data(
     """Generate the two Gaussian classes used by the Figure 2 source code."""
 
     del plot  # Plotting the individual draws is outside Figure 2 reproduction.
-    # These apparently redundant draws and decompositions are retained to
-    # match the random-number consumption and algebra of the audited source.
+    # These draws and decompositions preserve the experiment's deterministic
+    # random-number sequence and covariance construction.
     diagonal_1 = np.diag(np.random.uniform(3.0, 3.0, size=dim))
     diagonal_2 = np.diag(np.random.uniform(10.0, 10.0, size=dim))
     gaussian_matrix = np.random.randn(dim, dim)

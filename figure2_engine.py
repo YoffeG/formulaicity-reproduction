@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-"""Regenerate the six Figure 2 panels from the bundled reference module.
+"""Numerical simulation and plotting engine for Figure 2.
 
-The local module preserves the audited manuscript generator and comparison
-algorithms.  The two expensive Powell optimizations use algebraically
-equivalent, vectorized objectives with automatic gradients and bounded
-L-BFGS-B so the 2,000-weight panels can be run in a practical amount of time.
+The accompanying methods module implements the Gaussian data generator and
+comparison algorithms. The two continuous optimization problems use
+vectorized objectives with automatic gradients and bounded L-BFGS-B so that
+the 2,000-weight panels can be evaluated efficiently.
 """
 
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import multiprocessing as mp
 import os
@@ -26,12 +25,10 @@ from autograd import value_and_grad
 from scipy.optimize import minimize
 from scipy.stats import multivariate_normal
 
+import figure2_methods
 
-LOCAL_REFERENCE = (
-    Path(__file__).resolve().parent
-    / "figure2_reference.py"
-)
-DRIVE_SOURCE = LOCAL_REFERENCE
+
+METHODS_MODULE_PATH = Path(__file__).resolve().parent / "figure2_methods.py"
 PANEL_SPECS = (
     (50, 20),
     (50, 5),
@@ -57,7 +54,7 @@ COLORS = {
     "Reg. EM": "#1f77b4",
     "CEC": "#9467bd",
 }
-WORKER_DRIVE_MODULE = None
+WORKER_METHODS_MODULE = None
 
 
 @dataclass(frozen=True)
@@ -71,15 +68,6 @@ class Config:
     include_differential_entropy: bool
 
 
-def load_drive_module():
-    spec = importlib.util.spec_from_file_location("entropy_optim_rewritten", DRIVE_SOURCE)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"Could not load {DRIVE_SOURCE}")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
 def regularized_em_vectorized(
     data,
     k,
@@ -88,7 +76,7 @@ def regularized_em_vectorized(
     tol=1e-4,
     reg_param=1e-2,
 ):
-    """Algebraically identical Drive Reg. EM without N x d x d arrays."""
+    """Vectorized regularized EM without N x d x d intermediate arrays."""
 
     indices = np.random.choice(len(data), k, replace=False)
     means = data[indices]
@@ -149,7 +137,7 @@ def cross_entropy_clustering_vectorized(
     max_iter=100,
     tol=1e-6,
 ):
-    """Algebraically identical Drive CEC without N x d x d arrays."""
+    """Vectorized CEC without N x d x d intermediate arrays."""
 
     indices = np.random.choice(len(data), k, replace=False)
     means = data[indices]
@@ -196,10 +184,10 @@ def cross_entropy_clustering_vectorized(
 
 
 def initialize_worker_module():
-    global WORKER_DRIVE_MODULE
-    WORKER_DRIVE_MODULE = load_drive_module()
-    WORKER_DRIVE_MODULE.regularized_em = regularized_em_vectorized
-    WORKER_DRIVE_MODULE.cross_entropy_clustering = (
+    global WORKER_METHODS_MODULE
+    WORKER_METHODS_MODULE = figure2_methods
+    WORKER_METHODS_MODULE.regularized_em = regularized_em_vectorized
+    WORKER_METHODS_MODULE.cross_entropy_clustering = (
         cross_entropy_clustering_vectorized
     )
 
@@ -253,12 +241,12 @@ def make_starts(
     return starts
 
 
-def optimize_drive_self_information(
+def optimize_self_information(
     samples: np.ndarray,
     rng: np.random.Generator,
     config: Config,
 ) -> tuple[np.ndarray, float, bool]:
-    """Exact current Drive objective, vectorized for differentiation.
+    """Evaluate the manuscript self-information objective efficiently.
 
     This reproduces:
       std(H_all) * mean(H_all) / ||S||
@@ -303,7 +291,7 @@ def optimize_drive_self_information(
     return np.round(weights).astype(int), loss, success
 
 
-def optimize_drive_l2(
+def optimize_l2(
     samples: np.ndarray,
     rng: np.random.Generator,
     config: Config,
@@ -334,10 +322,10 @@ def run_one(
     seed: int,
     config: Config,
 ) -> dict:
-    module = WORKER_DRIVE_MODULE
+    module = WORKER_METHODS_MODULE
     if module is None:
         initialize_worker_module()
-        module = WORKER_DRIVE_MODULE
+        module = WORKER_METHODS_MODULE
     np.random.seed(seed % (2**32 - 1))
     rng = np.random.default_rng(seed)
     n_per_class = dim * coefficient
@@ -345,10 +333,10 @@ def run_one(
         dim, n_per_class, n_per_class, noise=noise, plot=False
     )
 
-    self_labels, self_loss, self_success = optimize_drive_self_information(
+    self_labels, self_loss, self_success = optimize_self_information(
         samples, rng, config
     )
-    l2_labels, l2_loss, l2_success = optimize_drive_l2(samples, rng, config)
+    l2_labels, l2_loss, l2_success = optimize_l2(samples, rng, config)
 
     scores: dict[str, float] = {
         "Self-Information": normalized_mcc(module, self_labels, labels),
@@ -555,14 +543,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--include-differential-entropy",
         action="store_true",
-        help="Re-enable the method currently commented out in the Drive code.",
+        help="Include the optional Differential Entropy comparator.",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
         default=Path(__file__).resolve().parent
         / "output"
-        / "figure_2_drive_code",
+        / "figure_2",
     )
     return parser.parse_args()
 
@@ -680,17 +668,17 @@ def main() -> None:
         if result["failures"]
     ]
     metadata = {
-        "source": str(DRIVE_SOURCE),
-        "source_modified": DRIVE_SOURCE.stat().st_mtime,
+        "methods_module": str(METHODS_MODULE_PATH),
+        "methods_module_modified": METHODS_MODULE_PATH.stat().st_mtime,
         "config": asdict(config),
-        "objective": "Current Drive std(H_all)*mean(H_all)/||S||",
-        "data_generator": "Bundled audited reference implementation",
+        "objective": "Manuscript Gaussian std(H_all)*mean(H_all)/||S||",
+        "data_generator": "Gaussian generator in figure2_methods.py",
         "comparators": (
-            "Bundled audited reference implementation; Differential Entropy "
+            "Methods in figure2_methods.py; Differential Entropy "
             + (
-                "re-enabled"
+                "enabled"
                 if config.include_differential_entropy
-                else "disabled exactly as in the audited source"
+                else "disabled"
             )
         ),
         "optimizer": "Algebraically equivalent vectorized objective; bounded L-BFGS-B",
