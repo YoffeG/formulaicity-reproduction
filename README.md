@@ -272,15 +272,3 @@ Supporting modules are organized by function:
 - `figure6_panel.py`: analysis and plotting of an individual Figure 6 panel
 - `formulaicity_optimization.py`: shared optimization and cluster-orientation
   routines
-
-Use `python <program> --help` to display all numerical and output options.
-
-## Reproducibility
-
-- Every random generator uses an explicit seed.
-- Trial-level seeds are retained in checkpoint files.
-- Intermediate numerical results are written to CSV or JSON.
-- Interrupted simulations and parameter sweeps resume from their checkpoints.
-- Figures are saved as vector PDF and high-resolution PNG files.
-- Use a separate `--output-dir` when comparing alternative score models or
-  optimization settings.
