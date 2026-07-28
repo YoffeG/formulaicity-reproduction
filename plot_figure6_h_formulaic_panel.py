@@ -9,6 +9,7 @@ self-information distributions of the fitted clusters.
 from __future__ import annotations
 
 import argparse
+import json
 import pickle
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -562,6 +563,42 @@ def main() -> None:
     )
     csv_path = OUTPUT_DIR / f"{output_stem}_features.csv"
     feature_table.to_csv(csv_path, index=False)
+    metrics_path = OUTPUT_DIR / f"{output_stem}_metrics.json"
+    metrics = {
+        "panel": args.panel_label,
+        "window": WINDOW_WIDTH,
+        "ngram": NGRAM_SIZE,
+        "features": FEATURE_COUNT,
+        "score_model": args.score_model,
+        "seed": args.seed,
+        "optimizer_restarts": args.optimizer_restarts,
+        "optimizer_iterations": args.optimizer_iterations,
+        "optimizer_success": bool(optimizer.success),
+        "optimizer_loss": float(optimizer.loss),
+        "normalized_mcc": float(mcc_score),
+        "formulaic_cluster": int(formulaic_cluster),
+        "formulaic_source": formulaic_source,
+        "non_formulaic_source": non_formulaic_source,
+        "h_share_formulaic": h_share_formulaic,
+        "h_share_other": h_share_other,
+        "p_share_formulaic": p_share_formulaic,
+        "p_share_other": p_share_other,
+        "formulaic_mean_self_information_bits": float(formulaic.mean()),
+        "non_formulaic_mean_self_information_bits": float(
+            non_formulaic.mean()
+        ),
+        "empirical_two_sided_p": empirical_p,
+        "empirical_equivalent_z": empirical_z,
+        "empirical_z_is_lower_bound": z_is_lower_bound,
+        "permutation_null_z": null_z_score,
+        "permutation_normal_two_sided_p": null_normal_p,
+        "subsamples": N_SUBSAMPLES,
+        "significance_permutations": N_SIGNIFICANCE_PERMUTATIONS,
+    }
+    metrics_path.write_text(
+        json.dumps(metrics, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
 
     print(f"normalized MCC={mcc_score:.6f}")
     print(
@@ -584,6 +621,7 @@ def main() -> None:
     print(f"SAVED {pdf_path}")
     print(f"SAVED {png_path}")
     print(f"SAVED {csv_path}")
+    print(f"SAVED {metrics_path}")
 
 
 if __name__ == "__main__":

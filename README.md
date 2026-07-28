@@ -21,12 +21,17 @@ not alter the published clustering objective.
 
 ## Installation
 
-Run the programs with the project environment:
+For exact reproduction, use Python 3.13.7 and the locked dependencies:
 
 ```bash
 cd reproduction_suite
-python -m pip install -r requirements.txt
+python3.13 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-lock.txt
 ```
+
+`requirements.txt` retains compatible version ranges for exploratory use;
+`requirements-lock.txt` records the environment used for the verified runs.
 
 All examples below assume that `reproduction_suite/` is the working directory.
 
@@ -186,6 +191,7 @@ Outputs are written to `output/figure_6/`:
 
 - `figure_6.pdf` and `figure_6.png`
 - one PDF, PNG, and feature CSV for each panel
+- one machine-readable metrics JSON for each panel
 - `figure_6_metadata.json`
 
 To restack existing panel PDFs without refitting:

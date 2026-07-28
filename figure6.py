@@ -205,17 +205,27 @@ def main() -> None:
 
     output_pdf = combine_panels(output_dir)
     output_png = render_pdf(output_pdf)
+    panel_metadata = []
+    for label, window, ngram, features in PANELS:
+        metrics_path = output_dir / (
+            f"{panel_stem(label, window, ngram, features)}_metrics.json"
+        )
+        if metrics_path.exists():
+            panel_metadata.append(
+                json.loads(metrics_path.read_text(encoding="utf-8"))
+            )
+        else:
+            panel_metadata.append(
+                {
+                    "panel": label,
+                    "window": window,
+                    "ngram": ngram,
+                    "features": features,
+                }
+            )
     metadata = {
         "score_model": args.score_model,
-        "panels": [
-            {
-                "label": label,
-                "window": window,
-                "ngram": ngram,
-                "features": features,
-            }
-            for label, window, ngram, features in PANELS
-        ],
+        "panels": panel_metadata,
         "self_information": (
             "count-weighted leave-one-out negative log2 probability"
         ),

@@ -516,7 +516,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--score-model",
         choices=("binary", "binomial", "multinomial"),
-        default="binomial",
+        default="multinomial",
+        help=(
+            "Likelihood used by the information method. Raw textual counts "
+            "require multinomial (the default)."
+        ),
     )
     parser.add_argument("--optimizer-restarts", type=int, default=6)
     parser.add_argument("--optimizer-iterations", type=int, default=200)
