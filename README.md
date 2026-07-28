@@ -201,6 +201,20 @@ python figure6.py \
   --combine-only
 ```
 
+## Validate a complete reproduction
+
+After running Figures 1 and 6 with their defaults, compare their numerical
+outputs with the independently verified clean-clone baselines:
+
+```bash
+python validate_reproduction.py
+```
+
+The command also checks every installed package against
+`requirements-lock.txt`. It compares numerical summaries rather than PDF
+bytes, allowing harmless differences in font rendering or embedded metadata.
+The clean-run baselines and verification record are in `expected/`.
+
 ## Reproducibility notes
 
 - All random generators have explicit seeds.

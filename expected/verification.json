@@ -1,0 +1,24 @@
+{
+  "date": "2026-07-28",
+  "git_commit": "d15c25bac0cd86115e191216605c350c2bdf1750",
+  "platform": "macOS arm64",
+  "python": "3.13.7",
+  "figure_1": {
+    "simulated_datasets": 8100,
+    "wall_seconds": 384.73,
+    "pdf_sha256": "fe11ca4b7994a6aaff578a8a9b8a3b291dafe8df2f3413654703f2fb0cac673c",
+    "png_sha256": "dc473a2371b4d64443173723f542d4d97e761a8a24cb6cd330de522e913bbbce",
+    "summary_sha256": "ed8bebf9e72c00584a13cb90c80c6042c1fb7590ad44a40f1ec51fcc68c7830b"
+  },
+  "figure_6": {
+    "wall_seconds": 58.02,
+    "panel_a_mcc": 93.51694504077723,
+    "panel_a_formulaic_source": "P-aligned",
+    "panel_a_permutation_null_z": 6.261164371350848,
+    "panel_b_mcc": 88.94266482278707,
+    "panel_b_formulaic_source": "H-aligned",
+    "panel_b_permutation_null_z": 19.73236787455156,
+    "pdf_sha256": "3d4e877b694c516977a655d407c77d3717ed26441a9189d921d8280cbcd0c8e1",
+    "png_sha256": "13a331abae50f5ef53c9cce3c56b82b610648086106bc061e244f82535601cd9"
+  }
+}
