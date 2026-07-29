@@ -115,7 +115,10 @@ python audit_figure1_math.py
 It compares Self-Information, the $L_2$ norm, Gaussian Mixture, regularized
 EM, and CEC across the dimensions, sample sizes, and noise levels specified in
 the article. The Gaussian objective is evaluated with continuous membership
-weights, analytic derivatives, and bounded L-BFGS-B optimization.
+weights, analytic derivatives, and bounded L-BFGS-B optimization. The weighted
+covariance follows Equation 19, and the two Gaussian covariance spectra use
+eigenvalues 10 and 30. Shaded regions show one population standard deviation
+across the simulations.
 
 Run the standard 100-simulation analysis:
 
@@ -143,6 +146,13 @@ CSV. To redraw the figure without repeating the simulations:
 ```bash
 python figure2.py \
   --plot-only
+```
+
+The weighted mean and covariance implementation can be checked directly
+against Equation 19:
+
+```bash
+python audit_figure2_math.py
 ```
 
 ## Figures 3--5: biblical text analyses
@@ -243,17 +253,17 @@ python figure6.py \
 ## Validation
 
 Reference numerical results are stored in `expected/`. After generating
-Figures 1 and 6, run:
+Figures 1, 2, and 6, run:
 
 ```bash
 python validate_reproduction.py
 ```
 
 The validator checks the installed package versions, verifies the Figure 1
-loss and analytic gradient, and compares the generated numerical summaries
-with the reference results. Numerical outputs are compared directly; PDF and
-PNG files are not byte-compared because font rendering and embedded metadata
-may vary across operating systems.
+loss and gradient and the Figure 2 weighted covariance, and compares the
+generated numerical summaries with the reference results. Numerical outputs
+are compared directly; PDF and PNG files are not byte-compared because font
+rendering and embedded metadata may vary across operating systems.
 
 ## Software organization
 

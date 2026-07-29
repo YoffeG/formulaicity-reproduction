@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 
 from audit_figure1_math import main as audit_figure_1_math
+from audit_figure2_math import main as audit_figure_2_math
 
 
 ROOT = Path(__file__).resolve().parent
@@ -30,6 +31,14 @@ FIGURE_1_KEYS = (
     "method",
 )
 FIGURE_1_VALUES = ("mean", "std")
+FIGURE_2_KEYS = (
+    "dimension",
+    "coefficient",
+    "samples_per_class",
+    "noise",
+    "method",
+)
+FIGURE_2_VALUES = ("mean", "std")
 FIGURE_6_FILES = {
     "a": "Leviticus_figure6_half_l12_n3_f500_panel-a_metrics.json",
     "b": "Leviticus_figure6_half_l6_n5_f500_panel-b_metrics.json",
@@ -101,6 +110,50 @@ def validate_figure_1(output_root: Path, atol: float, rtol: float) -> None:
                 f"is {difference:.12g}"
             )
     print("PASS Figure 1: all 324 numerical summary rows match")
+
+
+def validate_figure_2(output_root: Path, atol: float, rtol: float) -> None:
+    expected = pd.read_csv(EXPECTED_DIR / "figure_2_summary.csv")
+    observed_path = output_root / "figure_2" / "figure_2_summary.csv"
+    if not observed_path.exists():
+        raise FileNotFoundError(
+            f"Figure 2 summary is missing: {observed_path}"
+        )
+    observed = pd.read_csv(observed_path)
+    expected = expected.sort_values(list(FIGURE_2_KEYS)).reset_index(drop=True)
+    observed = observed.sort_values(list(FIGURE_2_KEYS)).reset_index(drop=True)
+
+    if len(expected) != len(observed):
+        raise AssertionError(
+            f"Figure 2 row count differs: {len(observed)} vs {len(expected)}"
+        )
+    if not expected[list(FIGURE_2_KEYS)].equals(
+        observed[list(FIGURE_2_KEYS)]
+    ):
+        raise AssertionError("Figure 2 condition keys do not match")
+    if not np.array_equal(
+        expected["count"].to_numpy(), observed["count"].to_numpy()
+    ):
+        raise AssertionError("Figure 2 simulation counts do not match")
+
+    for column in FIGURE_2_VALUES:
+        expected_values = expected[column].to_numpy(dtype=float)
+        observed_values = observed[column].to_numpy(dtype=float)
+        if not np.allclose(
+            observed_values,
+            expected_values,
+            atol=atol,
+            rtol=rtol,
+            equal_nan=True,
+        ):
+            difference = np.nanmax(
+                np.abs(observed_values - expected_values)
+            )
+            raise AssertionError(
+                f"Figure 2 {column} differs; maximum absolute difference "
+                f"is {difference:.12g}"
+            )
+    print("PASS Figure 2: all 216 numerical summary rows match")
 
 
 def compare_json(
@@ -215,14 +268,21 @@ def main() -> None:
             )
         print("PASS Environment: Python packages match requirements-lock.txt")
     audit_figure_1_math()
+    audit_figure_2_math()
     output_root = args.output_root.resolve()
     validate_figure_1(
+        output_root, args.absolute_tolerance, args.relative_tolerance
+    )
+    validate_figure_2(
         output_root, args.absolute_tolerance, args.relative_tolerance
     )
     validate_figure_6(
         output_root, args.absolute_tolerance, args.relative_tolerance
     )
-    print("PASS Reproduction: Figures 1 and 6 match the clean-run baselines")
+    print(
+        "PASS Reproduction: Figures 1, 2, and 6 match the numerical "
+        "reference results"
+    )
 
 
 if __name__ == "__main__":

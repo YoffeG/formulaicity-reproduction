@@ -1,6 +1,6 @@
 {
-  "date": "2026-07-28",
-  "source_simulation_commit": "d15c25bac0cd86115e191216605c350c2bdf1750",
+  "date": "2026-07-29",
+  "figure_1_and_6_source_commit": "d15c25bac0cd86115e191216605c350c2bdf1750",
   "platform": "macOS arm64",
   "python": "3.13.7",
   "figure_1": {
@@ -11,6 +11,26 @@
     "summary_sha256": "47c99524d556ece7de1e2d0ea82fd3859e71b8f8ba13c7d553630c5feb0325af",
     "summary_uncertainty": "population standard deviation (ddof=0)",
     "equations_7_10_audit": "passed"
+  },
+  "figure_2": {
+    "source_commit": "582468315acf3479fe3dbf576b98f0ec0762149d",
+    "simulated_datasets": 3600,
+    "simulations_per_condition": 100,
+    "wall_seconds": 101.26,
+    "covariance_normalization": "Equation 19 weighted maximum likelihood",
+    "covariance_eigenvalues": [
+      10,
+      30
+    ],
+    "optimizer_starts": 2,
+    "optimizer_max_iterations": 180,
+    "covariance_regularization": 0.01,
+    "failed_trials": 0,
+    "pdf_sha256": "357394895fbf2e7684e13f63931707bdd6712441b34f48802b9a271c7dad96bb",
+    "png_sha256": "3959eb8118016b9fd754f3a41869361190607eb8d435f132bc585fc69c3adb7a",
+    "summary_sha256": "9443c40e67f24d5f0c02aee5ea39464d183069e70147350e9f35014cb79588c5",
+    "summary_uncertainty": "population standard deviation (ddof=0)",
+    "equation_19_audit": "passed"
   },
   "figure_6": {
     "wall_seconds": 58.02,
