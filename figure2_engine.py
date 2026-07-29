@@ -241,6 +241,23 @@ def make_starts(
     return starts
 
 
+def weighted_gaussian_parameters(
+    samples,
+    weights,
+    epsilon: float,
+):
+    """Return the regularized weighted mean and covariance from Equation 19."""
+
+    normalized = weights / anp.sum(weights)
+    mean = anp.sum(normalized[:, None] * samples, axis=0)
+    centered = samples - mean
+    covariance = (
+        anp.dot(centered.T, normalized[:, None] * centered)
+        + epsilon * anp.eye(samples.shape[1])
+    )
+    return mean, covariance, centered
+
+
 def optimize_self_information(
     samples: np.ndarray,
     rng: np.random.Generator,
@@ -250,27 +267,19 @@ def optimize_self_information(
 
     This reproduces:
       std(H_all) * mean(H_all) / ||S||
-    where the Gaussian is fitted with continuous sample weights and NumPy's
-    default unbiased weighted-covariance normalization.
+    where the Gaussian is fitted with continuous sample weights and the
+    maximum-likelihood covariance normalization in Equation 19.
     """
 
     x = anp.asarray(samples)
     n_samples, dim = samples.shape
-    identity = anp.eye(dim)
     constant = dim * anp.log(2.0 * anp.pi)
 
     def objective(weights):
-        weight_sum = anp.sum(weights)
-        normalized = weights / weight_sum
-        mean = anp.sum(normalized[:, None] * x, axis=0)
-        centered = x - mean
-        covariance_numerator = anp.dot(
-            centered.T, normalized[:, None] * centered
-        )
-        unbiased_denominator = 1.0 - anp.sum(normalized * normalized)
-        covariance = (
-            covariance_numerator / unbiased_denominator
-            + config.epsilon * identity
+        _, covariance, centered = weighted_gaussian_parameters(
+            x,
+            weights,
+            config.epsilon,
         )
         logdet = anp.linalg.slogdet(covariance)[1]
         solved = anp.linalg.solve(covariance, centered.T).T
@@ -439,6 +448,26 @@ def summarize(results: list[dict]) -> pd.DataFrame:
                 }
             )
     return pd.DataFrame(rows)
+
+
+def aggregate_results(summary: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate trials using the population standard deviation shown in PDF."""
+
+    keys = [
+        "dimension",
+        "coefficient",
+        "samples_per_class",
+        "noise",
+        "method",
+    ]
+    return (
+        summary.groupby(keys, as_index=False)
+        .agg(
+            mean=("mcc", "mean"),
+            std=("mcc", lambda values: values.std(ddof=0)),
+            count=("mcc", "count"),
+        )
+    )
 
 
 def plot_figure(summary: pd.DataFrame, output_pdf: Path, output_png: Path) -> None:
@@ -639,21 +668,7 @@ def main() -> None:
         ignore_index=True,
     )
     summary.to_csv(raw_csv, index=False)
-    (
-        summary.groupby(
-            [
-                "dimension",
-                "coefficient",
-                "samples_per_class",
-                "noise",
-                "method",
-            ],
-            as_index=False,
-        )["mcc"]
-        .agg(["mean", "std", "count"])
-        .reset_index()
-        .to_csv(aggregate_csv, index=False)
-    )
+    aggregate_results(summary).to_csv(aggregate_csv, index=False)
     plot_figure(summary, output_pdf, output_png)
 
     failures = [
@@ -671,8 +686,15 @@ def main() -> None:
         "methods_module": str(METHODS_MODULE_PATH),
         "methods_module_modified": METHODS_MODULE_PATH.stat().st_mtime,
         "config": asdict(config),
-        "objective": "Manuscript Gaussian std(H_all)*mean(H_all)/||S||",
-        "data_generator": "Gaussian generator in figure2_methods.py",
+        "objective": "Gaussian std(H_all)*mean(H_all)/||S||",
+        "covariance": (
+            "Equation 19 weighted maximum-likelihood normalization; "
+            "sum_i s_i in the denominator"
+        ),
+        "data_generator": (
+            "Gaussian generator in figure2_methods.py; covariance "
+            "eigenvalues 10 and 30"
+        ),
         "comparators": (
             "Methods in figure2_methods.py; Differential Entropy "
             + (

@@ -1,9 +1,10 @@
 """Data-generation and comparison methods used for Figure 2.
 
 This module provides the scientific routines consumed by
-``figure2_engine.py``. The Gaussian generator defines one class
-has diagonal variance 3, the other variance 10, and ``noise`` replaces the
-requested fraction of low-variance coordinates by variance 10.
+``figure2_engine.py``. The Gaussian generator defines one class with
+covariance eigenvalues 10 and the other with covariance eigenvalues 30.
+``noise`` replaces the requested fraction of low-variance coordinates by
+variance 30.
 """
 
 from __future__ import annotations
@@ -34,8 +35,8 @@ def generate_data(
     del plot  # Plotting the individual draws is outside Figure 2 reproduction.
     # These draws and decompositions preserve the experiment's deterministic
     # random-number sequence and covariance construction.
-    diagonal_1 = np.diag(np.random.uniform(3.0, 3.0, size=dim))
-    diagonal_2 = np.diag(np.random.uniform(10.0, 10.0, size=dim))
+    diagonal_1 = np.diag(np.random.uniform(10.0, 10.0, size=dim))
+    diagonal_2 = np.diag(np.random.uniform(30.0, 30.0, size=dim))
     gaussian_matrix = np.random.randn(dim, dim)
     basis_1, _, _ = np.linalg.svd(gaussian_matrix)
     basis_2, _, _ = np.linalg.svd(gaussian_matrix)
